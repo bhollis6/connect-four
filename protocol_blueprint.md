@@ -48,7 +48,7 @@ The receiver will look for the `\n` within the byte buffer to split the byte buf
 
 ### 2.3 GAME_START
 * **Direction:** Server $\rightarrow$ Clients
-* **Purpose:** Server notifies both clients the game has started and assigns roles/colors.
+* **Purpose:** Server notifies both clients the game has started and assigns player numbers.
 * **Schema / Data Types:**
   * `message_type` (string): Fixed value "GAME_START"
   * `player_number` (int): Randomly assigned, mutually exclusive value (either 1 or 2)
@@ -92,7 +92,7 @@ The receiver will look for the `\n` within the byte buffer to split the byte buf
 
 ### 2.6 ERROR
 * **Direction:** Server $\rightarrow$ Client
-* **Purpose:** Server notifies a client of an out-of-turn move, full column, or malformed message.
+* **Purpose:** Server notifies a client of an out-of-turn move, full column, or miscellaneous error.
 * **Schema / Data Types:**
   * `message_type` (string): Fixed value "ERROR"
   * `error_message`(string): Describes the error
@@ -106,7 +106,7 @@ The receiver will look for the `\n` within the byte buffer to split the byte buf
 
 ### 2.7 DISCONNECT
 * **Direction:** Client $\rightarrow$ Server
-* **Purpose:** Client notifies server of an intentional departure (graceful exit).
+* **Purpose:** Client notifies server of an graceful exit.
 * **Schema / Data Types:**
   * `message_type` (string): Fixed value "DISCONNECT"
 * **Sample Payload:**
