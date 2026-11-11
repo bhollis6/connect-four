@@ -37,8 +37,12 @@ class CustomArgumentParser(argparse.ArgumentParser):
         sys.exit(2)
 
 
-def validate_port(port_val: int) -> int:
-    """Validates that the specified port is within the valid unprivileged range (1024-65535)."""
+def validate_port(port_str: str) -> int:
+    """Validates that the specified port is an integer within the unprivileged range (1024-65535)."""
+    try:
+        port_val = int(port_str)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"Invalid port '{port_str}'. Port must be an integer.")
     if not (1024 <= port_val <= 65535):
         raise argparse.ArgumentTypeError(
             f"Port {port_val} out of range. Port must be between 1024 and 65535."
@@ -67,13 +71,11 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument(
         "-p",
         "--port",
-        type=int,
+        type=validate_port,
         required=True,
         help="Server port number (required, valid range: 1024-65535)",
     )
-    args = parser.parse_args()
-    validate_port(args.port)
-    return args
+    return parser.parse_args()
 
 
 def resolve_server_address(hostname: str) -> str:
