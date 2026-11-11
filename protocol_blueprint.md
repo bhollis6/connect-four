@@ -3,7 +3,7 @@
 ## 1. Transport Layer & Packet Framing Mechanism
 
 **Transport Protocol:** TCP  
-**Serialization Format:** Structured JSON
+**Serialization Format:** Structured JSON  
 **Framing Mechanism:** Newline-Delimited `\n`  
 
 ### 1.1 Framing Rule Definition
@@ -30,7 +30,7 @@ The receiver will look for the `\n` within the byte buffer to split the byte buf
 * **Sample Payload:**
   ```json
   {
-    "message_type": "CONNECT",
+    "message_type": "CONNECT"
   }
   ```
 
@@ -42,7 +42,7 @@ The receiver will look for the `\n` within the byte buffer to split the byte buf
 * **Sample Payload:**
   ```json
   {
-    "message_type": "LOBBY_WAIT",
+    "message_type": "LOBBY_WAIT"
   }
   ```
 
@@ -95,7 +95,7 @@ The receiver will look for the `\n` within the byte buffer to split the byte buf
 * **Purpose:** Server notifies a client of an out-of-turn move, full column, or miscellaneous error.
 * **Schema / Data Types:**
   * `message_type` (string): Fixed value "ERROR"
-  * `error_message`(string): Describes the error
+  * `error_message` (string): Describes the error
 * **Sample Payload:**
   ```json
   {
@@ -118,15 +118,22 @@ The receiver will look for the `\n` within the byte buffer to split the byte buf
 
 ### 2.8 GAME_OVER
 * **Direction:** Server $\rightarrow$ Clients
-* **Purpose:** Server broadcasts final game outcome (Win, Draw, Forfeit).
+* **Purpose:** Server broadcasts final game outcome (Win, Draw, Forfeit) and scores.
 * **Schema / Data Types:**
   * `message_type` (string): Fixed value "GAME_OVER"
-  * `final_game_outcome` (int): 0 (draw), 1 (player 1 wins), 2 "player 2 wins"
+  * `final_game_outcome` (int): 0 (draw), 1 (player 1 wins), 2 (player 2 wins)
+  * `scores` (dict): Cumulative match scoreboard (`player_1_wins`, `player_2_wins`, `draws`, `rounds_played`)
 * **Sample Payload:**
   ```json
   {
     "message_type": "GAME_OVER",
-    "final_game_outcome": 1
+    "final_game_outcome": 1,
+    "scores": {
+      "player_1_wins": 1,
+      "player_2_wins": 0,
+      "draws": 0,
+      "rounds_played": 1
+    }
   }
   ```
 
@@ -138,7 +145,7 @@ The receiver will look for the `\n` within the byte buffer to split the byte buf
 If a client tries to quit, it sends a `DISCONNECT` message. The server reads this message, broadcasts a `GAME_OVER` message, and the remaining player wins by forfeit. Lastly, the server closes the connection with `sock.close()` and transitions to the `CLEANUP` state.
 
 ### 3.2 TCP EOF Detection (The 0-Byte Rule)
-The server will always check if `sock.recv()` returns an empty byte string. If this was not checked, the `sock.recv()` would continue to return an empty byte string, consuming 100% CPU with an infinite loop.
+The server will always check if `sock.recv()` returns an empty byte string (`b""`). If this was not checked, `sock.recv()` would continue to return an empty byte string on every call, consuming 100% CPU in an infinite busy loop.
 
 ### 3.3 Abrupt Termination & Socket Exceptions
-If a client crashes or drops off the network without sending a TCP FIN, the server's `send()` or `recv()` will raise an exception. A try-except block is used to catch `ConnectionResetError` or `BrokenPipeError`. Then, the server logs the error, cleans up, and declares the winner by forfeit.
+If a client crashes or drops off the network without sending a TCP FIN, the server's `send()` or `recv()` will raise an exception. A try-except block is used to catch `ConnectionResetError`, `BrokenPipeError`, or generic `OSError`. Then, the server logs the error, cleans up the socket descriptor from the selector, and declares the remaining player winner by forfeit.
